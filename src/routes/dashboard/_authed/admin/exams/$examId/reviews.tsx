@@ -25,7 +25,12 @@ import {
 import { CheatStatusBadge } from '~/components/dashboard/admin/exams/CheatStatusBadge'
 import Pagination from '~/components/ui/Pagination'
 import CompetitionBadge from '~/components/ui/CompetitionBadge'
-import { ArrowLeft, Eye } from 'lucide-react'
+import { ArrowLeft, Clock3, Eye } from 'lucide-react'
+import {
+  formatDuration,
+  getAttemptDurationMs,
+  getDurationTooltip,
+} from '~/lib/utils/format-duration'
 
 const SORT_OPTIONS = [
   { label: 'Skor Tertinggi', value: 'totalScore|desc' },
@@ -98,6 +103,12 @@ function AttemptsTable({
               <TableHead className="text-center">Salah</TableHead>
               <TableHead className="text-center">Kosong</TableHead>
               <TableHead className="text-center">Skor</TableHead>
+              <TableHead className="text-center">
+                <span className="inline-flex items-center gap-1">
+                  <Clock3 className="size-3" />
+                  Durasi
+                </span>
+              </TableHead>
               <TableHead className="text-center">Indikasi</TableHead>
               <TableHead className="text-center">Selesai</TableHead>
               <TableHead className="text-center">Aksi</TableHead>
@@ -107,7 +118,7 @@ function AttemptsTable({
             {attempts.length === 0 && (
               <TableRow>
                 <TableCell
-                  colSpan={10}
+                  colSpan={11}
                   className="text-center py-10 text-muted-foreground"
                 >
                   Belum ada peserta
@@ -123,6 +134,10 @@ function AttemptsTable({
                 (x: any) => x.answer && x.answer.trim() !== '' && !x.isCorrect,
               ).length
               const empty = totalQ - correct - wrong
+              const durationMs = getAttemptDurationMs(a.startTime, a.endTime)
+              const durationLabel = durationMs != null ? formatDuration(durationMs) : (a.finished ? '—' : 'Berlangsung')
+              const durationTooltip = getDurationTooltip(a.startTime, a.endTime)
+              const isOngoing = durationMs == null && !a.finished
               return (
                 <TableRow
                   key={a.id}
@@ -153,6 +168,20 @@ function AttemptsTable({
                   </TableCell>
                   <TableCell className="text-center font-bold text-primary">
                     {a.totalScore}
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <span
+                      className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 text-xs font-mono font-medium border ${
+                        isOngoing
+                          ? 'bg-amber-50 text-amber-700 border-amber-200'
+                          : durationMs != null
+                            ? 'bg-muted text-foreground border-border'
+                            : 'text-muted-foreground border-transparent'
+                      }`}
+                      title={durationTooltip}
+                    >
+                      {durationLabel}
+                    </span>
                   </TableCell>
                   <TableCell className="text-center">
                     <CheatStatusBadge flagged={a.flagged} cheatCount={a.cheatCount} />

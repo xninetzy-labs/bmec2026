@@ -5,9 +5,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '~
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import { exportToExcel } from '~/lib/utils/export-excel'
-import { Download } from 'lucide-react'
+import { Clock3, Download } from 'lucide-react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '~/components/ui/select'
 import { useState } from 'react'
+import { formatDuration, getAttemptDurationMs } from '~/lib/utils/format-duration'
 
 function ExamLeaderboardTable({ examId, examTitle }: { examId: string; examTitle: string }) {
   const { data: res } = useSuspenseQuery(examLeaderboardQueryOptions(examId))
@@ -24,6 +25,10 @@ function ExamLeaderboardTable({ examId, examTitle }: { examId: string; examTitle
           (x: any) => x.answer && x.answer.trim() !== '' && !x.isCorrect,
         ).length
         const empty = totalQ - correct - wrong
+        const durationMs = getAttemptDurationMs((a as any).startTime, (a as any).endTime)
+        const durLabel = durationMs != null ? formatDuration(durationMs) : (a.finished ? '—' : 'Berlangsung')
+        const mulai = (a as any).startTime ? new Date((a as any).startTime).toLocaleString('id-ID') : '—'
+        const selesai = (a as any).endTime ? new Date((a as any).endTime).toLocaleString('id-ID') : (a.finished ? '—' : 'Berlangsung')
         return {
           Rank: i + 1,
           'Nama Tim': a.team.name,
@@ -32,6 +37,9 @@ function ExamLeaderboardTable({ examId, examTitle }: { examId: string; examTitle
           Benar: correct,
           Salah: wrong,
           Kosong: empty,
+          Durasi: durLabel,
+          Mulai: mulai,
+          Selesai: selesai,
           Status: a.finished ? 'Selesai' : 'Berlangsung',
         }
       }),
@@ -61,13 +69,18 @@ function ExamLeaderboardTable({ examId, examTitle }: { examId: string; examTitle
               <TableHead className="text-center">Salah</TableHead>
               <TableHead className="text-center">Kosong</TableHead>
               <TableHead className="text-center">Skor</TableHead>
+              <TableHead className="text-center">
+                <span className="inline-flex items-center gap-1">
+                  <Clock3 className="size-3" /> Durasi
+                </span>
+              </TableHead>
               <TableHead className="text-center">Status</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {attempts.length === 0 && (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                   Belum ada peserta
                 </TableCell>
               </TableRow>
@@ -81,6 +94,9 @@ function ExamLeaderboardTable({ examId, examTitle }: { examId: string; examTitle
                 (x: any) => x.answer && x.answer.trim() !== '' && !x.isCorrect,
               ).length
               const empty = totalQ - correct - wrong
+              const durationMs = getAttemptDurationMs((a as any).startTime, (a as any).endTime)
+              const durationLabel = durationMs != null ? formatDuration(durationMs) : (a.finished ? '—' : 'Berlangsung')
+              const isOngoing = durationMs == null && !a.finished
               return (
                 <TableRow key={a.id}>
                   <TableCell className="text-center font-bold">
@@ -104,6 +120,24 @@ function ExamLeaderboardTable({ examId, examTitle }: { examId: string; examTitle
                   <TableCell className="text-center text-destructive font-medium">{wrong}</TableCell>
                   <TableCell className="text-center text-muted-foreground font-medium">{empty}</TableCell>
                   <TableCell className="text-center font-bold text-primary">{a.totalScore}</TableCell>
+                  <TableCell className="text-center">
+                    <span
+                      className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 text-xs font-mono font-medium border ${
+                        isOngoing
+                          ? 'bg-amber-50 text-amber-700 border-amber-200'
+                          : durationMs != null
+                            ? 'bg-muted text-foreground border-border'
+                            : 'text-muted-foreground border-transparent'
+                      }`}
+                      title={
+                        durationMs != null
+                          ? `${new Date((a as any).startTime).toLocaleString('id-ID')} → ${new Date((a as any).endTime).toLocaleString('id-ID')}`
+                          : 'Belum selesai'
+                      }
+                    >
+                      {durationLabel}
+                    </span>
+                  </TableCell>
                   <TableCell className="text-center">
                     {a.finished ? (
                       <Badge variant="default">Selesai</Badge>

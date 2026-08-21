@@ -2,6 +2,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '~
 import { Badge } from '~/components/ui/badge'
 import Pagination from '~/components/ui/Pagination'
 import CompetitionBadge from '~/components/ui/CompetitionBadge'
+import { Clock3 } from 'lucide-react'
+import { formatDuration, getAttemptDurationMs, getDurationTooltip } from '~/lib/utils/format-duration'
 
 interface Attempt {
   id: string
@@ -34,6 +36,12 @@ export function TableAttempts({ attempts, meta, onPageChange }: Props) {
               <TableHead className="text-center">Salah</TableHead>
               <TableHead className="text-center">Kosong</TableHead>
               <TableHead className="text-center">Skor</TableHead>
+              <TableHead className="text-center">
+                <span className="inline-flex items-center gap-1">
+                  <Clock3 className="size-3" />
+                  Durasi
+                </span>
+              </TableHead>
               <TableHead className="text-center">Status</TableHead>
               <TableHead>Mulai</TableHead>
               <TableHead>Selesai</TableHead>
@@ -43,7 +51,7 @@ export function TableAttempts({ attempts, meta, onPageChange }: Props) {
           <TableBody>
             {attempts.length === 0 && (
               <TableRow>
-                <TableCell colSpan={10} className="text-center py-10 text-muted-foreground">
+                <TableCell colSpan={11} className="text-center py-10 text-muted-foreground">
                   Belum ada peserta yang mengerjakan
                 </TableCell>
               </TableRow>
@@ -59,6 +67,10 @@ export function TableAttempts({ attempts, meta, onPageChange }: Props) {
               ).length
               const empty = totalQ - correct - wrong
               const rank = (meta.page - 1) * meta.limit + i + 1
+              const durationMs = getAttemptDurationMs(attempt.startTime, attempt.endTime)
+              const durationLabel = durationMs != null ? formatDuration(durationMs) : (attempt.finished ? '—' : 'Berlangsung')
+              const durationTooltip = getDurationTooltip(attempt.startTime, attempt.endTime)
+              const isOngoing = durationMs == null && !attempt.finished
 
               return (
                 <TableRow key={attempt.id}>
@@ -105,6 +117,21 @@ export function TableAttempts({ attempts, meta, onPageChange }: Props) {
 
                   <TableCell className="text-center">
                     <span className="text-sm font-bold text-primary">{attempt.totalScore}</span>
+                  </TableCell>
+
+                  <TableCell className="text-center">
+                    <span
+                      className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 text-xs font-mono font-medium border ${
+                        isOngoing
+                          ? 'bg-amber-50 text-amber-700 border-amber-200'
+                          : durationMs != null
+                            ? 'bg-muted text-foreground border-border'
+                            : 'text-muted-foreground border-transparent'
+                      }`}
+                      title={durationTooltip}
+                    >
+                      {durationLabel}
+                    </span>
                   </TableCell>
 
                   <TableCell className="text-center">

@@ -4,8 +4,13 @@ import { attemptDetailQueryOptions } from '~/lib/api/exam-attempts/attempt.query
 import { CheatStatusBadge } from '~/components/dashboard/admin/exams/CheatStatusBadge'
 import { EventTypeBadge } from '~/components/dashboard/admin/exams/EventTypeBadge'
 import { Badge } from '~/components/ui/badge'
-import { ArrowLeft, CheckCircle2, XCircle, MinusCircle } from 'lucide-react'
+import { ArrowLeft, CheckCircle2, Clock3, XCircle, MinusCircle } from 'lucide-react'
 import { cn } from '~/lib/utils'
+import {
+  formatDuration,
+  formatDurationHHMMSS,
+  getAttemptDurationMs,
+} from '~/lib/utils/format-duration'
 
 export const Route = createFileRoute(
   '/dashboard/_authed/admin/exams/$examId/attempts/$attemptId',
@@ -41,6 +46,17 @@ function RouteComponent() {
     (sum: number, q: any) => sum + (q.correctScore ?? 0),
     0,
   )
+
+  // Durasi pengerjaan — hitung dari startTime & endTime tanpa ubah DB
+  const durationMs = getAttemptDurationMs((attempt as any).startTime, (attempt as any).endTime)
+  const durationLabel = durationMs != null ? formatDuration(durationMs) : ((attempt as any).finished ? '—' : 'Berlangsung')
+  const durationHHMMSS = durationMs != null ? formatDurationHHMMSS(durationMs) : '—'
+  const startLabel = (attempt as any).startTime
+    ? new Date((attempt as any).startTime).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'medium' })
+    : '—'
+  const endLabel = (attempt as any).endTime
+    ? new Date((attempt as any).endTime).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'medium' })
+    : ((attempt as any).finished ? '—' : 'Belum selesai')
 
   return (
     <div className="space-y-8 w-full pt-20 min-h-screen pb-10 max-w-5xl mx-auto px-8">
@@ -90,6 +106,40 @@ function RouteComponent() {
             <div className="text-sm font-semibold text-foreground">{item.value}</div>
           </div>
         ))}
+      </div>
+
+      {/* Waktu pengerjaan — durasi tanpa ubah DB */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="border rounded-xl p-4 space-y-1">
+          <p className="text-[10px] text-muted-foreground uppercase tracking-widest flex items-center gap-1">
+            <Clock3 className="size-3" /> Waktu Mulai
+          </p>
+          <div className="text-sm font-semibold text-foreground font-mono">{startLabel}</div>
+        </div>
+        <div className="border rounded-xl p-4 space-y-1">
+          <p className="text-[10px] text-muted-foreground uppercase tracking-widest flex items-center gap-1">
+            <Clock3 className="size-3" /> Waktu Selesai
+          </p>
+          <div className="text-sm font-semibold text-foreground font-mono">{endLabel}</div>
+          {(attempt as any).finished && !(attempt as any).endTime && (
+            <p className="text-[10px] text-amber-600">Sudah selesai tapi waktu selesai tidak tercatat</p>
+          )}
+          {!(attempt as any).finished && (
+            <p className="text-[10px] text-amber-600">Masih berlangsung</p>
+          )}
+        </div>
+        <div className="border rounded-xl p-4 space-y-1 bg-primary/5 border-primary/20">
+          <p className="text-[10px] text-muted-foreground uppercase tracking-widest flex items-center gap-1">
+            <Clock3 className="size-3" /> Durasi Pengerjaan
+          </p>
+          <div className="text-xl font-bold text-primary font-mono">{durationLabel}</div>
+          {durationMs != null && (
+            <p className="text-[10px] text-muted-foreground font-mono">{durationHHMMSS}</p>
+          )}
+          {durationMs == null && !(attempt as any).finished && (
+            <p className="text-[10px] text-muted-foreground">Akan tampil setelah tim menekan Selesai</p>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-3 gap-3">
