@@ -56,6 +56,19 @@ export default class ExamRepo {
             startTime: true,
           },
         },
+        sessions: {
+          select: {
+            id: true,
+            name: true,
+            startTime: true,
+            endTime: true,
+            assignments: {
+              where: { teamId },
+              select: { sessionId: true },
+            },
+          },
+          orderBy: { startTime: 'asc' },
+        },
       },
       orderBy: { startDate: 'asc' },
     })

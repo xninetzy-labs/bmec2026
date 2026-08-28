@@ -28,7 +28,41 @@ export default class ExamAttemptService {
     if (!exam) throw new AppError('Ujian tidak ditemukan', 404)
 
     const now = new Date()
-    if (now < exam.startDate || now > exam.endDate) {
+
+    if (exam.type === 'OLYMPIAD') {
+      const sessionCount = await this.repo.countSessionsByExamId(input.examId)
+
+      if (sessionCount === 0) {
+        // Fallback: exam olimpiade belum punya sesi → window exam (D4)
+        if (now < exam.startDate || now > exam.endDate) {
+          throw new AppError('Ujian tidak dalam periode aktif', 400)
+        }
+      } else {
+        // Ada sesi: attempt baru hanya boleh dibuat dalam window sesi tim (D3).
+        // Attempt yang sudah ada boleh resume melewati akhir sesi.
+        const existingAttempt = await this.repo.findAttemptLite(
+          input.teamId,
+          input.examId,
+        )
+
+        if (!existingAttempt) {
+          const assignment = await this.repo.findAssignment(
+            input.teamId,
+            input.examId,
+          )
+
+          if (!assignment) {
+            throw new AppError('Tim belum di-assign ke sesi ujian', 400)
+          }
+          if (now < assignment.session.startTime) {
+            throw new AppError('Sesi ujian belum dimulai', 400)
+          }
+          if (now > assignment.session.endTime) {
+            throw new AppError('Sesi ujian telah berakhir', 400)
+          }
+        }
+      }
+    } else if (now < exam.startDate || now > exam.endDate) {
       throw new AppError('Ujian tidak dalam periode aktif', 400)
     }
 

@@ -27,6 +27,7 @@ import { Route as DashboardAuthedTeamExamExamIdIndexRouteImport } from './routes
 import { Route as DashboardAuthedAdminExamsExamIdIndexRouteImport } from './routes/dashboard/_authed/admin/exams/$examId/index'
 import { Route as DashboardAuthedTeamExamExamIdReviewRouteImport } from './routes/dashboard/_authed/team/exam/$examId/review'
 import { Route as DashboardAuthedAdminExamsExamIdReviewsRouteImport } from './routes/dashboard/_authed/admin/exams/$examId/reviews'
+import { Route as DashboardAuthedAdminExamsExamIdSessionsIndexRouteImport } from './routes/dashboard/_authed/admin/exams/$examId/sessions/index'
 import { Route as DashboardAuthedAdminExamsExamIdAttemptsAttemptIdRouteImport } from './routes/dashboard/_authed/admin/exams/$examId/attempts/$attemptId'
 
 const IndexRoute = IndexRouteImport.update({
@@ -132,6 +133,12 @@ const DashboardAuthedAdminExamsExamIdReviewsRoute =
     path: '/admin/exams/$examId/reviews',
     getParentRoute: () => DashboardAuthedRoute,
   } as any)
+const DashboardAuthedAdminExamsExamIdSessionsIndexRoute =
+  DashboardAuthedAdminExamsExamIdSessionsIndexRouteImport.update({
+    id: '/admin/exams/$examId/sessions/',
+    path: '/admin/exams/$examId/sessions/',
+    getParentRoute: () => DashboardAuthedRoute,
+  } as any)
 const DashboardAuthedAdminExamsExamIdAttemptsAttemptIdRoute =
   DashboardAuthedAdminExamsExamIdAttemptsAttemptIdRouteImport.update({
     id: '/admin/exams/$examId/attempts/$attemptId',
@@ -159,6 +166,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/admin/exams/$examId/': typeof DashboardAuthedAdminExamsExamIdIndexRoute
   '/dashboard/team/exam/$examId/': typeof DashboardAuthedTeamExamExamIdIndexRoute
   '/dashboard/admin/exams/$examId/attempts/$attemptId': typeof DashboardAuthedAdminExamsExamIdAttemptsAttemptIdRoute
+  '/dashboard/admin/exams/$examId/sessions/': typeof DashboardAuthedAdminExamsExamIdSessionsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -180,6 +188,7 @@ export interface FileRoutesByTo {
   '/dashboard/admin/exams/$examId': typeof DashboardAuthedAdminExamsExamIdIndexRoute
   '/dashboard/team/exam/$examId': typeof DashboardAuthedTeamExamExamIdIndexRoute
   '/dashboard/admin/exams/$examId/attempts/$attemptId': typeof DashboardAuthedAdminExamsExamIdAttemptsAttemptIdRoute
+  '/dashboard/admin/exams/$examId/sessions': typeof DashboardAuthedAdminExamsExamIdSessionsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -202,6 +211,7 @@ export interface FileRoutesById {
   '/dashboard/_authed/admin/exams/$examId/': typeof DashboardAuthedAdminExamsExamIdIndexRoute
   '/dashboard/_authed/team/exam/$examId/': typeof DashboardAuthedTeamExamExamIdIndexRoute
   '/dashboard/_authed/admin/exams/$examId/attempts/$attemptId': typeof DashboardAuthedAdminExamsExamIdAttemptsAttemptIdRoute
+  '/dashboard/_authed/admin/exams/$examId/sessions/': typeof DashboardAuthedAdminExamsExamIdSessionsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -225,6 +235,7 @@ export interface FileRouteTypes {
     | '/dashboard/admin/exams/$examId/'
     | '/dashboard/team/exam/$examId/'
     | '/dashboard/admin/exams/$examId/attempts/$attemptId'
+    | '/dashboard/admin/exams/$examId/sessions/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -246,6 +257,7 @@ export interface FileRouteTypes {
     | '/dashboard/admin/exams/$examId'
     | '/dashboard/team/exam/$examId'
     | '/dashboard/admin/exams/$examId/attempts/$attemptId'
+    | '/dashboard/admin/exams/$examId/sessions'
   id:
     | '__root__'
     | '/'
@@ -267,6 +279,7 @@ export interface FileRouteTypes {
     | '/dashboard/_authed/admin/exams/$examId/'
     | '/dashboard/_authed/team/exam/$examId/'
     | '/dashboard/_authed/admin/exams/$examId/attempts/$attemptId'
+    | '/dashboard/_authed/admin/exams/$examId/sessions/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -406,6 +419,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardAuthedAdminExamsExamIdReviewsRouteImport
       parentRoute: typeof DashboardAuthedRoute
     }
+    '/dashboard/_authed/admin/exams/$examId/sessions/': {
+      id: '/dashboard/_authed/admin/exams/$examId/sessions/'
+      path: '/admin/exams/$examId/sessions'
+      fullPath: '/dashboard/admin/exams/$examId/sessions/'
+      preLoaderRoute: typeof DashboardAuthedAdminExamsExamIdSessionsIndexRouteImport
+      parentRoute: typeof DashboardAuthedRoute
+    }
     '/dashboard/_authed/admin/exams/$examId/attempts/$attemptId': {
       id: '/dashboard/_authed/admin/exams/$examId/attempts/$attemptId'
       path: '/admin/exams/$examId/attempts/$attemptId'
@@ -430,6 +450,7 @@ interface DashboardAuthedRouteChildren {
   DashboardAuthedAdminExamsExamIdIndexRoute: typeof DashboardAuthedAdminExamsExamIdIndexRoute
   DashboardAuthedTeamExamExamIdIndexRoute: typeof DashboardAuthedTeamExamExamIdIndexRoute
   DashboardAuthedAdminExamsExamIdAttemptsAttemptIdRoute: typeof DashboardAuthedAdminExamsExamIdAttemptsAttemptIdRoute
+  DashboardAuthedAdminExamsExamIdSessionsIndexRoute: typeof DashboardAuthedAdminExamsExamIdSessionsIndexRoute
 }
 
 const DashboardAuthedRouteChildren: DashboardAuthedRouteChildren = {
@@ -454,6 +475,8 @@ const DashboardAuthedRouteChildren: DashboardAuthedRouteChildren = {
     DashboardAuthedTeamExamExamIdIndexRoute,
   DashboardAuthedAdminExamsExamIdAttemptsAttemptIdRoute:
     DashboardAuthedAdminExamsExamIdAttemptsAttemptIdRoute,
+  DashboardAuthedAdminExamsExamIdSessionsIndexRoute:
+    DashboardAuthedAdminExamsExamIdSessionsIndexRoute,
 }
 
 const DashboardAuthedRouteWithChildren = DashboardAuthedRoute._addFileChildren(

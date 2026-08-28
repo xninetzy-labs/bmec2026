@@ -151,7 +151,30 @@ export default class ExamAttemptRepo {
   findExamWindow(examId: string) {
     return prisma.exam.findUnique({
       where: { id: examId },
-      select: { id: true, startDate: true, endDate: true, duration: true },
+      select: { id: true, startDate: true, endDate: true, duration: true, type: true },
+    })
+  }
+
+  findAttemptLite(teamId: string, examId: string) {
+    return prisma.examAttempt.findUnique({
+      where: { teamId_examId: { teamId, examId } },
+      select: { id: true, finished: true, startTime: true },
+    })
+  }
+
+  countSessionsByExamId(examId: string) {
+    return prisma.examSession.count({ where: { examId } })
+  }
+
+  findAssignment(teamId: string, examId: string) {
+    return prisma.examSessionTeam.findUnique({
+      where: { teamId_examId: { teamId, examId } },
+      select: {
+        id: true,
+        session: {
+          select: { id: true, name: true, startTime: true, endTime: true },
+        },
+      },
     })
   }
 

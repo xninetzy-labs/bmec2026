@@ -15,3 +15,14 @@ export async function requireTeamSession(expectedTeamId?: string) {
 
   return teamId
 }
+
+export async function requireAdminSession() {
+  const session = await useAppSession()
+  const adminId = session.data.userId
+
+  if (!adminId || session.data.role !== 'ADMIN') {
+    throw new AppError('Sesi admin tidak valid', 401)
+  }
+
+  return adminId
+}

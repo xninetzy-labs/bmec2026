@@ -85,15 +85,69 @@ function ExamList({ teamId }: { teamId: string }) {
       </h3>
       <div className="grid grid-cols-1 gap-3">
         {exams.map((exam) => {
-          const start = new Date(exam.startDate)
-          const end = new Date(exam.endDate)
-          const isActive = now >= start && now <= end
-          const isEnded = now > end
-          const isUpcoming = now < start
-          
           const attempt = exam.attempts?.[0]
-          const isFinished = attempt?.finished
+          const isFinished = Boolean(attempt?.finished)
           const isStarted = Boolean(attempt && !attempt.finished)
+          const hasSessions =
+            exam.type === 'OLYMPIAD' && (exam.sessions?.length ?? 0) > 0
+          const mySession = hasSessions
+            ? (exam.sessions as any[]).find(
+                (s: any) => (s.assignments?.length ?? 0) > 0,
+              )
+            : undefined
+
+          // Status default: hitung dari window exam (TRYOUT + fallback OLYMPIAD tanpa sesi)
+          let isActive = now >= new Date(exam.startDate) && now <= new Date(exam.endDate)
+          let isUpcoming = now < new Date(exam.startDate)
+          let isEnded = now > new Date(exam.endDate)
+          let badgeText = isFinished ? null : isActive ? 'Aktif' : isUpcoming ? 'Segera' : 'Ditutup'
+          let lockMessage: string | null = null
+          let sessionInfo: { name: string; range: string } | null = null
+
+          if (hasSessions) {
+            if (!mySession) {
+              isActive = false
+              isUpcoming = false
+              isEnded = false
+              badgeText = 'Tidak Terjadwal'
+              lockMessage = 'Tim kamu belum di-assign ke sesi ujian.'
+            } else {
+              const sStart = new Date(mySession.startTime)
+              const sEnd = new Date(mySession.endTime)
+              const fmtDayTime = (d: Date) =>
+                d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }) +
+                ' · ' +
+                d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+              sessionInfo = {
+                name: mySession.name,
+                range: `${fmtDayTime(sStart)} – ${fmtDayTime(sEnd)}`,
+              }
+
+              if (isFinished) {
+                isActive = false; isUpcoming = false; isEnded = false
+              } else if (now > new Date(exam.endDate)) {
+                // Hard-stop: exam endDate tercapai — tim mana pun, durasi berapa pun
+                isActive = false; isUpcoming = false; isEnded = true
+                badgeText = 'Waktu Habis'
+                lockMessage = 'Waktu pengerjaan ujian telah berakhir.'
+              } else if (isStarted) {
+                // Sudah mulai → boleh lanjut walau sesi lewat (D3); deadline dijaga server
+                isActive = true; isUpcoming = false; isEnded = false
+                badgeText = 'Aktif'
+              } else if (now < sStart) {
+                isActive = false; isUpcoming = true; isEnded = false
+                badgeText = 'Belum Dimulai'
+                lockMessage = 'Sesi kamu belum dimulai.'
+              } else if (now <= sEnd) {
+                isActive = true; isUpcoming = false; isEnded = false
+                badgeText = 'Aktif'
+              } else {
+                isActive = false; isUpcoming = false; isEnded = true
+                badgeText = 'Waktu Habis'
+                lockMessage = 'Sesi kamu telah berakhir.'
+              }
+            }
+          }
 
           return (
             <div key={exam.id} className="rounded-2xl bg-background shadow border p-5 space-y-3">
@@ -104,27 +158,42 @@ function ExamList({ teamId }: { teamId: string }) {
                 </div>
                 {isFinished ? (
                   <Badge variant="secondary" className="shrink-0 bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20">Selesai</Badge>
-                ) : isActive ? (
-                  <Badge className="shrink-0">Aktif</Badge>
-                ) : isUpcoming ? (
-                  <Badge variant="outline" className="shrink-0">Segera</Badge>
                 ) : (
-                  <Badge variant="secondary" className="shrink-0">Ditutup</Badge>
+                  <Badge variant={isActive ? 'default' : isEnded ? 'secondary' : 'outline'} className="shrink-0">{badgeText}</Badge>
                 )}
               </div>
 
               <div className="space-y-1">
-                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <Clock size={12} />
-                  <span>Mulai: {start.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
-                </div>
-                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <Clock size={12} />
-                  <span>Selesai: {end.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
-                </div>
+                {sessionInfo ? (
+                  <>
+                    <Badge variant="outline" className="shrink-0 text-xs">
+                      {sessionInfo.name} · Mulai {sessionInfo.range.split('–')[0].split('·')[1]?.trim()}
+                    </Badge>
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <Clock size={12} />
+                      <span>Mulai sesimu: {sessionInfo.range}</span>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <Clock size={12} />
+                      <span>Mulai: {new Date(exam.startDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <Clock size={12} />
+                      <span>Selesai: {new Date(exam.endDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                    </div>
+                  </>
+                )}
               </div>
 
-              {isFinished ? (
+              {lockMessage ? (
+                <Button size="sm" variant="outline" className="w-full rounded-xl" disabled>
+                  <Lock size={13} className="mr-1.5" />
+                  {lockMessage}
+                </Button>
+              ) : isFinished ? (
                 exam.type === 'TRYOUT' ? (
                   <Button size="sm" variant="outline" className="w-full rounded-xl" asChild>
                     <a href={`/dashboard/team/exam/${exam.id}/review`}>

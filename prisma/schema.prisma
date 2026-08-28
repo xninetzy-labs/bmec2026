@@ -23,6 +23,7 @@ model Team {
   currentStageId  String?
   twibbonUrl      String?
   attempts        ExamAttempt[]
+  sessionAssignments ExamSessionTeam[]
   members         Member[]
   registration    Registration?
   submissions     Submission[]
@@ -178,6 +179,7 @@ model Exam {
   stage     Stage          @relation(fields: [stageId], references: [id])
   attempts  ExamAttempt[]
   questions ExamQuestion[]
+  sessions  ExamSession[]
 
   @@unique([title, stageId], name: "title_stageId")
 }
@@ -256,6 +258,34 @@ model ExamAnswer {
   question   ExamQuestion @relation(fields: [questionId], references: [id])
 
   @@unique([attemptId, questionId])
+}
+
+model ExamSession {
+  id        String   @id @default(uuid())
+  name      String
+  startTime DateTime
+  endTime   DateTime
+  examId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  exam      Exam              @relation(fields: [examId], references: [id], onDelete: Cascade)
+  assignments ExamSessionTeam[]
+
+  @@unique([examId, name])
+  @@map("exam_session")
+}
+
+model ExamSessionTeam {
+  id        String   @id @default(uuid())
+  sessionId String
+  teamId    String
+  examId    String
+  createdAt DateTime @default(now())
+  session   ExamSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  team      Team        @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, examId])
+  @@map("exam_session_team")
 }
 
 enum CompetitionType {
